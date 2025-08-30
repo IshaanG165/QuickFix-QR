@@ -22,6 +22,9 @@ export function Header() {
           <Link href="/admin" className="text-sm text-gray-700 dark:text-gray-300 hover:underline">
             Admin
           </Link>
+          <Link href="/r/BIN-001" className="text-sm text-blue-700 dark:text-blue-300 hover:underline">
+            Report issue
+          </Link>
           <Button
             variant="ghost"
             size="icon"
