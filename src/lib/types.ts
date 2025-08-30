@@ -10,6 +10,7 @@ export interface Issue {
   category: IssueCategory;
   urgency: IssueUrgency;
   status: IssueStatus;
+  title?: string;
   note?: string;
   photo_url?: string;
   created_at: string; // ISO timestamp

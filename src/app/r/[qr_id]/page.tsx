@@ -21,6 +21,8 @@ const Map = dynamic(() => import("react-leaflet").then(m => (m as any).MapContai
 const TileLayer = dynamic(() => import("react-leaflet").then(m => (m as any).TileLayer), { ssr: false }) as any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Marker = dynamic(() => import("react-leaflet").then(m => (m as any).Marker), { ssr: false }) as any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Popup = dynamic(() => import("react-leaflet").then(m => (m as any).Popup), { ssr: false }) as any;
 // lightweight internal component to capture map clicks
 const ClickHandler = dynamic(
   () => import("react-leaflet").then(m => {
@@ -38,8 +40,10 @@ const ClickHandler = dynamic(
 
 const schema = z
   .object({
+    qr_id: z.string().trim().min(3, "Identifier is too short"),
     category: z.enum(["bin","light","water","other"]),
     urgency: z.enum(["normal","urgent"]),
+    title: z.string().trim().min(3, "Title is too short").max(80, "Title is too long"),
     note: z.string().max(240).optional(),
     photo: z.instanceof(File).optional(),
     lat: z.number(),
@@ -69,13 +73,15 @@ export default function ReportPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
 
-  const { register, watch, handleSubmit, setValue, formState: { isSubmitting } } = useForm<FormData>({
+  const { register, watch, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { category: preCat, urgency: "normal" },
+    defaultValues: { qr_id: qr, category: preCat, urgency: "normal", title: "", token: "dev" },
   });
   const noteValue = watch("note") || "";
   const categoryValue = watch("category") || preCat;
   const urgencyValue = watch("urgency") || "normal";
+  const titleValue = watch("title") || "";
+  const qrInput = watch("qr_id") || qr;
 
   useEffect(() => {
     let timed = false;
@@ -144,9 +150,10 @@ export default function ReportPage() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          qr_id: qr,
+          qr_id: data.qr_id || qr,
           category: data.category,
           urgency: data.urgency,
+          title: data.title,
           note: data.note ?? null,
           lat: data.lat,
           lng: data.lng,
@@ -156,7 +163,7 @@ export default function ReportPage() {
       const json = await resp.json();
       if (!resp.ok) throw new Error(json?.error || "Submit failed");
       toast.success(`Created ticket ${json.id}`);
-      router.push(`/r/success?ticket=${json.id}&qr=${encodeURIComponent(qr)}`);
+      router.push(`/r/success?ticket=${json.id}&qr=${encodeURIComponent(data.qr_id || qr)}`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Failed to submit report";
       toast.error(msg);
@@ -167,42 +174,61 @@ export default function ReportPage() {
     <div className="mx-auto max-w-xl p-4">
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Report issue for {qr}</CardTitle>
+          <CardTitle className="text-xl">Report issue for {qrInput}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+            {/* register hidden inputs so RHF tracks these fields */}
+            <input type="hidden" {...register("category")} />
+            <input type="hidden" {...register("urgency")} />
+            <div>
+              <label className="text-sm mb-1 block">Identifier</label>
+              <Input placeholder="e.g., BIN-001" maxLength={40} {...register("qr_id")} />
+              {errors.qr_id && <div className="text-xs text-red-500 mt-1">{errors.qr_id.message as string}</div>}
+            </div>
+            <div>
+              <label className="text-sm mb-1 block">Title</label>
+              <Input placeholder="e.g., Overflowing bin near main gate" maxLength={80} {...register("title")}/>
+              {errors.title && <div className="text-xs text-red-500 mt-1">{errors.title.message as string}</div>}
+              <div className="text-xs text-gray-500 mt-1 text-right">{(watch("title")?.length || 0)}/80</div>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-sm mb-1 block">Category</label>
                 <ToggleGroup
                   type="single"
+                  orientation="horizontal"
                   value={categoryValue}
-                  onValueChange={(v) => v && setValue("category", v as FormData["category"])}
+                  onValueChange={(v) => setValue("category", (v || categoryValue) as FormData["category"], { shouldDirty: true, shouldValidate: true })}
                   className="justify-start"
                 >
-                  <ToggleGroupItem value="bin" aria-label="Bin">Bin</ToggleGroupItem>
-                  <ToggleGroupItem value="light" aria-label="Light">Light</ToggleGroupItem>
-                  <ToggleGroupItem value="water" aria-label="Water">Water</ToggleGroupItem>
-                  <ToggleGroupItem value="other" aria-label="Other">Other</ToggleGroupItem>
+                  <ToggleGroupItem value="bin" aria-label="Bin" className="transition-colors hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Bin</ToggleGroupItem>
+                  <ToggleGroupItem value="light" aria-label="Light" className="transition-colors hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Light</ToggleGroupItem>
+                  <ToggleGroupItem value="water" aria-label="Water" className="transition-colors hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Water</ToggleGroupItem>
+                  <ToggleGroupItem value="other" aria-label="Other" className="transition-colors hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Other</ToggleGroupItem>
                 </ToggleGroup>
+                {errors.category && <div className="text-xs text-red-500 mt-1">Please choose a category</div>}
               </div>
               <div>
                 <label className="text-sm mb-1 block">Urgency</label>
                 <ToggleGroup
                   type="single"
+                  orientation="horizontal"
                   value={urgencyValue}
-                  onValueChange={(v) => v && setValue("urgency", v as FormData["urgency"])}
+                  onValueChange={(v) => setValue("urgency", (v || urgencyValue) as FormData["urgency"], { shouldDirty: true, shouldValidate: true })}
                   className="justify-start"
                 >
-                  <ToggleGroupItem value="normal" aria-label="Normal">Normal</ToggleGroupItem>
-                  <ToggleGroupItem value="urgent" aria-label="Urgent">Urgent</ToggleGroupItem>
+                  <ToggleGroupItem value="normal" aria-label="Normal" className="transition-colors hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Normal</ToggleGroupItem>
+                  <ToggleGroupItem value="urgent" aria-label="Urgent" className="transition-colors hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Urgent</ToggleGroupItem>
                 </ToggleGroup>
+                {errors.urgency && <div className="text-xs text-red-500 mt-1">Please choose urgency</div>}
               </div>
             </div>
 
             <div>
               <label className="text-sm mb-1 block">Note (max 240)</label>
               <Textarea maxLength={240} {...register("note")} placeholder="Describe the issue (e.g., location details, severity)" />
+              {errors.note && <div className="text-xs text-red-500 mt-1">{errors.note.message as string}</div>}
               <div className="text-xs text-gray-500 mt-1 text-right">{noteValue.length}/240</div>
             </div>
 
@@ -282,7 +308,14 @@ export default function ReportPage() {
                           setValue("lng", ll.lng);
                         }
                       }}
-                    />
+                    >
+                      {titleValue ? (
+                        <Popup>
+                          <div className="text-sm font-medium">{titleValue}</div>
+                          <div className="text-xs text-muted-foreground">{categoryValue} • {urgencyValue}</div>
+                        </Popup>
+                      ) : null}
+                    </Marker>
                   )}
                 </Map>
               </div>

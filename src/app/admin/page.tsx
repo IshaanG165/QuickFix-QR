@@ -101,6 +101,23 @@ export default function AdminPage() {
     })();
   }
 
+  function onDelete(id: string) {
+    // optimistic remove
+    setIssues((prev) => prev ? prev.filter(i => i.id !== id) : prev);
+    if (selectedId === id) setSelectedId(null);
+    (async () => {
+      try {
+        const res = await fetch(`/api/issues/${id}`, { method: "DELETE" });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error || "Failed to delete");
+        toast.success("Issue deleted");
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Failed to delete issue";
+        toast.error(msg);
+      }
+    })();
+  }
+
   const listIssues = issues ?? [];
 
   const loading = issues === null;
@@ -124,7 +141,7 @@ export default function AdminPage() {
               ))}
             </div>
           ) : (
-            <IssueList issues={listIssues} selectedId={selectedId ?? undefined} onSelect={onSelect} onChangeStatus={onChangeStatus} />
+            <IssueList issues={listIssues} selectedId={selectedId ?? undefined} onSelect={onSelect} onChangeStatus={onChangeStatus} onDelete={onDelete} />
           )}
         </div>
       </div>
