@@ -1,26 +1,111 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+/* Removed nonstandard @custom-variant to satisfy CSS linters */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --radius: 0.625rem;
+  --background: #fafafa; /* gray-50 */
+  --foreground: #111827; /* gray-900 */
+  --card: #fff; /* gray-100 */
+  --card-foreground: #111827; /* gray-900 */
+  --popover: #fff; /* gray-100 */
+  --popover-foreground: #111827; /* gray-900 */
+  --primary: #2563eb; /* blue-600 */
+  --primary-foreground: #fff; /* gray-100 */
+  --success: #10b981; /* emerald-500 */
+  --secondary: #6b7280; /* gray-500 */
+  --secondary-foreground: #111827; /* gray-900 */
+  --muted: #6b7280; /* gray-500 */
+  --muted-foreground: #111827; /* gray-900 */
+  --accent: #6b7280; /* gray-500 */
+  --accent-foreground: #111827; /* gray-900 */
+  --destructive: #dc2626; /* red-500 */
+  --border: #d1d5db; /* gray-300 */
+  --input: #d1d5db; /* gray-300 */
+  --ring: #2563eb; /* blue-600 */
+  --chart-1: #f59e0b; /* orange-400 */
+  --chart-2: #10b981; /* green-500 */
+  --chart-3: #8b9467; /* green-700 */
+  --chart-4: #f97316; /* orange-500 */
+  --chart-5: #4f46e5; /* purple-500 */
+  --sidebar: #111827; /* gray-900 */
+  --sidebar-foreground: #f3f4f6; /* gray-100 */
+  --sidebar-primary: #2563eb; /* blue-600 */
+  --sidebar-primary-foreground: #fff; /* gray-100 */
+  --sidebar-accent: #6b7280; /* gray-500 */
+  --sidebar-accent-foreground: #111827; /* gray-900 */
+  --sidebar-border: #d1d5db; /* gray-300 */
+  --sidebar-ring: #3b82f6; /* blue-500 */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --background: #111827; /* gray-900 */
+  --foreground: #f3f4f6; /* gray-100 */
+  --card: #1f2937; /* gray-800 */
+  --card-foreground: #f3f4f6; /* gray-100 */
+  --popover: #1f2937; /* gray-800 */
+  --popover-foreground: #f3f4f6; /* gray-100 */
+  --primary: #3b82f6; /* blue-500 */
+  --primary-foreground: #fff; /* gray-100 */
+  --secondary: #6b7280; /* gray-500 */
+  --secondary-foreground: #f3f4f6; /* gray-100 */
+  --muted: #6b7280; /* gray-500 */
+  --muted-foreground: #f3f4f6; /* gray-100 */
+  --accent: #6b7280; /* gray-500 */
+  --accent-foreground: #f3f4f6; /* gray-100 */
+  --destructive: #dc2626; /* red-500 */
+  --border: #374151; /* gray-700 (improved contrast) */
+  --input: #374151; /* gray-700 (improved contrast) */
+  --ring: #3b82f6; /* blue-500 */
+  --chart-1: #f59e0b; /* orange-400 */
+  --chart-2: #10b981; /* green-500 */
+  --chart-3: #8b9467; /* green-700 */
+  --chart-4: #f97316; /* orange-500 */
+  --chart-5: #4f46e5; /* purple-500 */
+  --sidebar: #1f2937; /* gray-800 */
+  --sidebar-foreground: #f3f4f6; /* gray-100 */
+  --sidebar-primary: #3b82f6; /* blue-500 */
+  --sidebar-primary-foreground: #fff; /* gray-100 */
+  --sidebar-accent: #6b7280; /* gray-500 */
+  --sidebar-accent-foreground: #f3f4f6; /* gray-100 */
+  --sidebar-border: #1f2937; /* gray-800 */
+  --sidebar-ring: #3b82f6; /* blue-500 */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Removed nonstandard @theme block to satisfy CSS linters */
 
+/* Removed duplicated OKLCH :root block to avoid conflicts */
+
+/* Removed duplicated OKLCH .dark block to avoid conflicts */
+
+/* Replace Tailwind @apply with plain CSS to satisfy CSS linters */
+* {
+  border-color: var(--border);
+  outline-color: var(--ring);
+}
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Visible focus for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Subtle outline on Leaflet maps for both themes */
+.leaflet-container {
+  outline: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }
