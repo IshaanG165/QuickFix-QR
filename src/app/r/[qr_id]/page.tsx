@@ -72,14 +72,17 @@ export default function ReportPage() {
   const [coords, setCoords] = useState<{lat:number; lng:number} | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
+  const [markerIcon, setMarkerIcon] = useState<any | null>(null);
 
   const { register, watch, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
+    mode: "onChange",
+    reValidateMode: "onChange",
     defaultValues: { qr_id: qr, category: preCat, urgency: "normal", title: "", token: "dev" },
   });
   const noteValue = watch("note") || "";
-  const categoryValue = watch("category") || preCat;
-  const urgencyValue = watch("urgency") || "normal";
+  const categoryValue = watch("category");
+  const urgencyValue = watch("urgency");
   const titleValue = watch("title") || "";
   const qrInput = watch("qr_id") || qr;
 
@@ -128,6 +131,22 @@ export default function ReportPage() {
       if (photoPreview) URL.revokeObjectURL(photoPreview);
     };
   }, [photoPreview]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const L = await import("leaflet");
+      if (!mounted) return;
+      const icon = L.divIcon({
+        className: "",
+        html: '<div style="width:18px;height:18px;background:#dc2626;border-radius:9999px;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.2);"></div>',
+        iconSize: [18, 18] as [number, number],
+        iconAnchor: [9, 9] as [number, number],
+      });
+      setMarkerIcon(icon);
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   function onVerify(token: string) {
     setValue("token", token);
@@ -199,15 +218,17 @@ export default function ReportPage() {
                   type="single"
                   orientation="horizontal"
                   value={categoryValue}
-                  onValueChange={(v) => setValue("category", (v || categoryValue) as FormData["category"], { shouldDirty: true, shouldValidate: true })}
+                  onValueChange={(v) => setValue("category", (v || undefined) as any, { shouldDirty: true, shouldValidate: true })}
+                  aria-invalid={!!errors.category}
+                  aria-describedby={errors.category ? "category-error" : undefined}
                   className="justify-start"
                 >
-                  <ToggleGroupItem value="bin" aria-label="Bin" className="transition-colors hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Bin</ToggleGroupItem>
-                  <ToggleGroupItem value="light" aria-label="Light" className="transition-colors hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Light</ToggleGroupItem>
-                  <ToggleGroupItem value="water" aria-label="Water" className="transition-colors hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Water</ToggleGroupItem>
-                  <ToggleGroupItem value="other" aria-label="Other" className="transition-colors hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Other</ToggleGroupItem>
+                  <ToggleGroupItem value="bin" aria-label="Bin" className="rounded-md border border-gray-200 dark:border-gray-800 transition-all active:scale-95 hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:ring-2 data-[state=on]:ring-primary data-[state=on]:ring-offset-2 dark:data-[state=on]:ring-offset-gray-900 data-[state=on]:font-semibold data-[state=on]:shadow data-[state=on]:scale-95 data-[state=on]:border-transparent">Bin</ToggleGroupItem>
+                  <ToggleGroupItem value="light" aria-label="Light" className="rounded-md border border-gray-200 dark:border-gray-800 transition-all active:scale-95 hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:ring-2 data-[state=on]:ring-primary data-[state=on]:ring-offset-2 dark:data-[state=on]:ring-offset-gray-900 data-[state=on]:font-semibold data-[state=on]:shadow data-[state=on]:scale-95 data-[state=on]:border-transparent">Light</ToggleGroupItem>
+                  <ToggleGroupItem value="water" aria-label="Water" className="rounded-md border border-gray-200 dark:border-gray-800 transition-all active:scale-95 hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:ring-2 data-[state=on]:ring-primary data-[state=on]:ring-offset-2 dark:data-[state=on]:ring-offset-gray-900 data-[state=on]:font-semibold data-[state=on]:shadow data-[state=on]:scale-95 data-[state=on]:border-transparent">Water</ToggleGroupItem>
+                  <ToggleGroupItem value="other" aria-label="Other" className="rounded-md border border-gray-200 dark:border-gray-800 transition-all active:scale-95 hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:ring-2 data-[state=on]:ring-primary data-[state=on]:ring-offset-2 dark:data-[state=on]:ring-offset-gray-900 data-[state=on]:font-semibold data-[state=on]:shadow data-[state=on]:scale-95 data-[state=on]:border-transparent">Other</ToggleGroupItem>
                 </ToggleGroup>
-                {errors.category && <div className="text-xs text-red-500 mt-1">Please choose a category</div>}
+                {errors.category && <div id="category-error" className="text-xs text-red-500 mt-1">Please choose a category</div>}
               </div>
               <div>
                 <label className="text-sm mb-1 block">Urgency</label>
@@ -215,13 +236,15 @@ export default function ReportPage() {
                   type="single"
                   orientation="horizontal"
                   value={urgencyValue}
-                  onValueChange={(v) => setValue("urgency", (v || urgencyValue) as FormData["urgency"], { shouldDirty: true, shouldValidate: true })}
+                  onValueChange={(v) => setValue("urgency", (v || undefined) as any, { shouldDirty: true, shouldValidate: true })}
+                  aria-invalid={!!errors.urgency}
+                  aria-describedby={errors.urgency ? "urgency-error" : undefined}
                   className="justify-start"
                 >
-                  <ToggleGroupItem value="normal" aria-label="Normal" className="transition-colors hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Normal</ToggleGroupItem>
-                  <ToggleGroupItem value="urgent" aria-label="Urgent" className="transition-colors hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Urgent</ToggleGroupItem>
+                  <ToggleGroupItem value="normal" aria-label="Normal" className="rounded-md border border-gray-200 dark:border-gray-800 transition-all active:scale-95 hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:ring-2 data-[state=on]:ring-primary data-[state=on]:ring-offset-2 dark:data-[state=on]:ring-offset-gray-900 data-[state=on]:font-semibold data-[state=on]:shadow data-[state=on]:scale-95 data-[state=on]:border-transparent">Normal</ToggleGroupItem>
+                  <ToggleGroupItem value="urgent" aria-label="Urgent" className="rounded-md border border-gray-200 dark:border-gray-800 transition-all active:scale-95 hover:bg-muted/70 hover:shadow-sm focus-visible:ring-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:ring-2 data-[state=on]:ring-primary data-[state=on]:ring-offset-2 dark:data-[state=on]:ring-offset-gray-900 data-[state=on]:font-semibold data-[state=on]:shadow data-[state=on]:scale-95 data-[state=on]:border-transparent">Urgent</ToggleGroupItem>
                 </ToggleGroup>
-                {errors.urgency && <div className="text-xs text-red-500 mt-1">Please choose urgency</div>}
+                {errors.urgency && <div id="urgency-error" className="text-xs text-red-500 mt-1">Please choose urgency</div>}
               </div>
             </div>
 
@@ -299,6 +322,7 @@ export default function ReportPage() {
                   {coords && (
                     <Marker
                       position={[coords.lat, coords.lng]}
+                      icon={markerIcon ?? undefined}
                       draggable
                       eventHandlers={{
                         dragend: (e: { target: { getLatLng: () => { lat: number; lng: number } } }) => {
@@ -332,7 +356,7 @@ export default function ReportPage() {
 
             <TurnstileMock onVerify={onVerify} />
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full" disabled={isSubmitting || !categoryValue || !urgencyValue}>
               {isSubmitting ? "Submitting…" : "Submit Report"}
             </Button>
 

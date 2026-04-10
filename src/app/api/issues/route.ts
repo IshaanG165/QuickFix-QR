@@ -36,25 +36,27 @@ export async function GET(req: NextRequest) {
       created_at: string;
     };
 
-    const withSigned = await Promise.all(
-      (data as Row[] | null | undefined || []).map(async (row) => {
-        if (row.photo_url) {
-          try {
-            const supabase = createServerClient();
-            const { data: signed, error: signErr } = await supabase
-              .storage
-              .from(ISSUE_BUCKET)
-              .createSignedUrl(row.photo_url, 60 * 60); // 1h
-            if (!signErr && signed?.signedUrl) {
-              row.photo_url = signed.signedUrl;
-            }
-          } catch {}
+    const rows = (data as Row[] | null | undefined) || [];
+    const paths = rows.map(r => r.photo_url).filter((p): p is string => !!p);
+    if (paths.length > 0) {
+      const { data: signedList, error: signErr } = await supabase
+        .storage
+        .from(ISSUE_BUCKET)
+        .createSignedUrls(paths, 60 * 60);
+      if (!signErr && signedList) {
+        const map = new Map<string, string>();
+        for (let i = 0; i < signedList.length; i++) {
+          const original = paths[i];
+          const signed = signedList[i];
+          if (signed?.signedUrl) map.set(original, signed.signedUrl);
         }
-        return row;
-      })
-    );
+        for (const r of rows) {
+          if (r.photo_url && map.has(r.photo_url)) r.photo_url = map.get(r.photo_url) as string;
+        }
+      }
+    }
 
-    return Response.json({ items: withSigned });
+    return Response.json({ items: rows });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Server error";
     return Response.json({ error: msg }, { status: 500 });
