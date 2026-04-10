@@ -4,73 +4,47 @@
 /* Removed nonstandard @custom-variant to satisfy CSS linters */
 
 :root {
-  --radius: 0.625rem;
-  --background: #fafafa; /* gray-50 */
-  --foreground: #111827; /* gray-900 */
-  --card: #fff; /* gray-100 */
-  --card-foreground: #111827; /* gray-900 */
-  --popover: #fff; /* gray-100 */
-  --popover-foreground: #111827; /* gray-900 */
-  --primary: #2563eb; /* blue-600 */
-  --primary-foreground: #fff; /* gray-100 */
-  --success: #10b981; /* emerald-500 */
-  --secondary: #6b7280; /* gray-500 */
-  --secondary-foreground: #111827; /* gray-900 */
-  --muted: #6b7280; /* gray-500 */
-  --muted-foreground: #111827; /* gray-900 */
-  --accent: #6b7280; /* gray-500 */
-  --accent-foreground: #111827; /* gray-900 */
-  --destructive: #dc2626; /* red-500 */
-  --border: #d1d5db; /* gray-300 */
-  --input: #d1d5db; /* gray-300 */
-  --ring: #2563eb; /* blue-600 */
-  --chart-1: #f59e0b; /* orange-400 */
-  --chart-2: #10b981; /* green-500 */
-  --chart-3: #8b9467; /* green-700 */
-  --chart-4: #f97316; /* orange-500 */
-  --chart-5: #4f46e5; /* purple-500 */
-  --sidebar: #111827; /* gray-900 */
-  --sidebar-foreground: #f3f4f6; /* gray-100 */
-  --sidebar-primary: #2563eb; /* blue-600 */
-  --sidebar-primary-foreground: #fff; /* gray-100 */
-  --sidebar-accent: #6b7280; /* gray-500 */
-  --sidebar-accent-foreground: #111827; /* gray-900 */
-  --sidebar-border: #d1d5db; /* gray-300 */
-  --sidebar-ring: #3b82f6; /* blue-500 */
+  --radius: 0.75rem; /* 12px border radius */
+  --background: #F7F6F2; /* Near-white */
+  --foreground: #0F1F3D; /* Dark navy */
+  --card: #ffffff;
+  --card-foreground: #0F1F3D;
+  --popover: #ffffff;
+  --popover-foreground: #0F1F3D;
+  --primary: #0F1F3D; /* Dark navy */
+  --primary-foreground: #ffffff;
+  --success: #10b981;
+  --secondary: #e5e7eb;
+  --secondary-foreground: #0F1F3D;
+  --muted: #e5e7eb;
+  --muted-foreground: #4b5563;
+  --accent: #F59E0B; /* Electric amber */
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --border: #d1d5db;
+  --input: #d1d5db;
+  --ring: #F59E0B; /* Focus ring uses amber */
 }
 
 .dark {
-  --background: #111827; /* gray-900 */
-  --foreground: #f3f4f6; /* gray-100 */
-  --card: #1f2937; /* gray-800 */
-  --card-foreground: #f3f4f6; /* gray-100 */
-  --popover: #1f2937; /* gray-800 */
-  --popover-foreground: #f3f4f6; /* gray-100 */
-  --primary: #3b82f6; /* blue-500 */
-  --primary-foreground: #fff; /* gray-100 */
-  --secondary: #6b7280; /* gray-500 */
-  --secondary-foreground: #f3f4f6; /* gray-100 */
-  --muted: #6b7280; /* gray-500 */
-  --muted-foreground: #f3f4f6; /* gray-100 */
-  --accent: #6b7280; /* gray-500 */
-  --accent-foreground: #f3f4f6; /* gray-100 */
-  --destructive: #dc2626; /* red-500 */
-  --border: #374151; /* gray-700 (improved contrast) */
-  --input: #374151; /* gray-700 (improved contrast) */
-  --ring: #3b82f6; /* blue-500 */
-  --chart-1: #f59e0b; /* orange-400 */
-  --chart-2: #10b981; /* green-500 */
-  --chart-3: #8b9467; /* green-700 */
-  --chart-4: #f97316; /* orange-500 */
-  --chart-5: #4f46e5; /* purple-500 */
-  --sidebar: #1f2937; /* gray-800 */
-  --sidebar-foreground: #f3f4f6; /* gray-100 */
-  --sidebar-primary: #3b82f6; /* blue-500 */
-  --sidebar-primary-foreground: #fff; /* gray-100 */
-  --sidebar-accent: #6b7280; /* gray-500 */
-  --sidebar-accent-foreground: #f3f4f6; /* gray-100 */
-  --sidebar-border: #1f2937; /* gray-800 */
-  --sidebar-ring: #3b82f6; /* blue-500 */
+  --background: #0a101f; /* Darker navy for background */
+  --foreground: #F7F6F2;
+  --card: #0F1F3D; /* Dark navy */
+  --card-foreground: #F7F6F2;
+  --popover: #0F1F3D;
+  --popover-foreground: #F7F6F2;
+  --primary: #F7F6F2;
+  --primary-foreground: #0F1F3D;
+  --secondary: #1e293b;
+  --secondary-foreground: #F7F6F2;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #F59E0B; /* Electric amber */
+  --accent-foreground: #0F1F3D;
+  --destructive: #dc2626;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #F59E0B;
 }
 
 /* Removed nonstandard @theme block to satisfy CSS linters */

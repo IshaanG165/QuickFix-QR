@@ -1,6 +1,28 @@
 import { NextRequest } from "next/server";
 import { createServerClient, ISSUE_TABLE, ISSUE_BUCKET } from "@/lib/supabase";
 
+export async function GET(req: NextRequest, context: { params: { id: string } }) {
+  try {
+    const { id } = context.params;
+    if (!id) return Response.json({ error: "Missing id" }, { status: 400 });
+    
+    const supabase = createServerClient();
+    const { data: issue, error } = await supabase
+      .from(ISSUE_TABLE)
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      return Response.json({ error: error.message }, { status: 500 });
+    }
+    return Response.json({ issue });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Server error";
+    return Response.json({ error: msg }, { status: 500 });
+  }
+}
+
 export async function PATCH(req: NextRequest, context: { params: { id: string } }) {
   try {
     const { id } = context.params;

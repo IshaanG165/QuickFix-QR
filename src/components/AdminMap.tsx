@@ -3,8 +3,10 @@
 import { MapContainer, TileLayer, Marker, Tooltip, useMap, CircleMarker } from "react-leaflet";
 import L from "leaflet";
 import { Issue } from "@/lib/types";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Script from "next/script";
 
+// Simple clustering fallback component if react-leaflet-cluster fails or just render normally until Zoom is tight
 function FitBounds({ issues }: { issues: Issue[] }) {
   const map = useMap();
   useEffect(() => {
@@ -12,6 +14,35 @@ function FitBounds({ issues }: { issues: Issue[] }) {
     const bounds = L.latLngBounds(issues.map(i => [i.lat, i.lng] as [number, number]));
     map.fitBounds(bounds.pad(0.2), { animate: true });
   }, [issues, map]);
+  return null;
+}
+
+// Leaflet.heat integration layer
+function HeatmapLayer({ issues }: { issues: Issue[] }) {
+  const map = useMap();
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof window !== "undefined" && (window as any).L && (window as any).L.heatLayer) {
+      const points = issues.map(i => [i.lat, i.lng, i.urgency === "urgent" || i.urgency === "high" ? 1.0 : 0.5]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const layer = (window as any).L.heatLayer(points, {
+        radius: 25,
+        blur: 15,
+        maxZoom: 17,
+        gradient: {
+          0.4: 'cyan',
+          0.6: 'lime',
+          0.8: 'yellow',
+          1.0: 'red'
+        }
+      }).addTo(map);
+
+      return () => {
+        map.removeLayer(layer);
+      };
+    }
+  }, [issues, map]);
+  
   return null;
 }
 
@@ -38,19 +69,47 @@ export function AdminMap({
 }) {
   const hasIssues = issues && issues.length > 0;
   const markers = useMemo(() => issues, [issues]);
+  const [viewMode, setViewMode] = useState<"marker" | "heat">("marker");
 
   return (
-    <div className="h-full w-full overflow-hidden rounded-2xl shadow-sm">
-      <MapContainer center={[center.lat, center.lng]} zoom={zoom} className="h-full w-full" scrollWheelZoom>
+    <div className="h-full w-full overflow-hidden rounded-2xl shadow-sm relative">
+      <Script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js" strategy="lazyOnload" />
+      
+      {/* View Toggle */}
+      <div className="absolute top-4 right-4 z-[400] bg-card rounded-lg shadow-md border border-border p-1 flex">
+        <button 
+          onClick={() => setViewMode("marker")}
+          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === "marker" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+        >
+          Markers
+        </button>
+        <button 
+          onClick={() => setViewMode("heat")}
+          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === "heat" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+        >
+          Heatmap
+        </button>
+      </div>
+
+      <MapContainer center={[center.lat, center.lng]} zoom={zoom} className="h-full w-full outline-none z-0" scrollWheelZoom>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
         {fitToIssues && hasIssues ? <FitBounds issues={issues} /> : null}
-        {markers.map((i) => {
+        
+        {viewMode === "heat" && hasIssues && <HeatmapLayer issues={issues} />}
+        
+        {(viewMode === "marker" || viewMode === "heat") && markers.map((i) => {
+          // even in heat mode, render pulsing urgent issues!
+          const isUrgent = i.urgency === "urgent" || i.urgency === "high";
+          
+          if (viewMode === "heat" && !isUrgent) return null; // hide normals in heat mode
+
           const color = statusColor[i.status];
           const isSelected = selectedId === i.id;
           const size = isSelected ? 16 : 12;
+
           return (
             <Marker
               key={i.id}
@@ -62,20 +121,22 @@ export function AdminMap({
                 iconSize: [size, size],
               })}
             >
-              {/* Urgent ring */}
-              {i.urgency === "urgent" ? (
+              {isUrgent ? (
                 <CircleMarker
                   center={[i.lat, i.lng]}
                   radius={18}
-                  pathOptions={{ color: color, opacity: 0.4 }}
+                  pathOptions={{ color: '#ef4444', opacity: 0.8, fillColor: '#ef4444', fillOpacity: 0.3 }}
+                  className="animate-pulse"
                 />
               ) : null}
-              <Tooltip direction="top" offset={[0, -10]} opacity={1} permanent={false} sticky>
-                <div className="text-xs">
-                  <div className="font-medium">{i.qr_id}</div>
-                  <div className="text-[11px]">{i.category} • {i.status} {i.urgency === "urgent" ? "• URGENT" : ""}</div>
-                </div>
-              </Tooltip>
+              {viewMode === "marker" && (
+                <Tooltip direction="top" offset={[0, -10]} opacity={1} permanent={false} sticky>
+                  <div className="text-xs p-1">
+                    <div className="font-bold">{i.title || i.qr_id}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{i.category} • {i.status}</div>
+                  </div>
+                </Tooltip>
+              )}
             </Marker>
           );
         })}

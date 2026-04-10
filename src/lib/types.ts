@@ -1,7 +1,6 @@
 export type IssueStatus = "reported" | "in_progress" | "fixed";
 export type IssueCategory = "bin" | "light" | "water" | "other";
-export type IssueUrgency = "normal" | "urgent";
-
+export type IssueUrgency = "low" | "medium" | "high" | "normal" | "urgent";
 export interface Issue {
   id: string;
   qr_id: string;

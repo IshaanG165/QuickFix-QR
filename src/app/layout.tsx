@@ -29,7 +29,7 @@ export default function RootLayout({
           <main className="min-h-[calc(100vh-56px)]">
             {children}
           </main>
-          <Toaster richColors closeButton />
+          <Toaster richColors closeButton position="bottom-center" className="sm:bottom-right" />
         </ThemeProvider>
       </body>
     </html>
